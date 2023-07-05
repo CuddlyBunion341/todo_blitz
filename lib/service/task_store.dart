@@ -4,6 +4,16 @@ import 'package:todo_blitz/model/task.dart';
 class TaskStore {
   final List<Task> _tasks = [];
 
+  void init() {
+    for (int i = 0; i < 10; i++) {
+      _tasks.add(Task('Task $i', '', DateTime.now(), false));
+    }
+  }
+
+  TaskStore() {
+    init();
+  }
+
   List<Task> getTasks() {
     return _tasks;
   }
@@ -17,7 +27,7 @@ class TaskStore {
   }
 
   void addTask(Task task) {
-    _tasks.add(task);
+    _tasks.insert(0, task);
   }
 
   bool removeTask(Task task) {

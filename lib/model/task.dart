@@ -23,4 +23,8 @@ class Task {
   bool isDue() {
     return date.isBefore(DateTime.now());
   }
+
+  Task clone() {
+    return Task(title, content, date, completed);
+  }
 }
