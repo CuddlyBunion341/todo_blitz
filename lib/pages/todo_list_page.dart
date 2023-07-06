@@ -102,10 +102,21 @@ class TodoListPageState extends State<TodoListPage> {
   }
 
   Widget taskList(TaskStore store) {
-    // Add the context parameter
-    return ListView.builder(
-        itemCount: store.getTasks().length,
-        itemBuilder: (context, index) => listItem(context, index));
+    return ReorderableListView(
+      children: [
+        for (int index = 0; index < store.getTasks().length; index++)
+          listItem(context, index)
+      ],
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          if (newIndex > oldIndex) {
+            newIndex -= 1;
+          }
+          final Task item = store.getTasks().removeAt(oldIndex);
+          store.getTasks().insert(newIndex, item);
+        });
+      },
+    );
   }
 
   Widget listItem(BuildContext context, index) {
