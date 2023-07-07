@@ -18,6 +18,10 @@ class TodoBlitz extends StatelessWidget {
         useMaterial3: true,
       ),
       home: const TodoListPage(),
+      routes: {
+        // '/': (context) => const TodoListPage(),
+        '/config': (context) => const SettingsPage(),
+      },
     );
   }
 }
