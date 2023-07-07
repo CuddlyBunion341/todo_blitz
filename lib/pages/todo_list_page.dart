@@ -35,12 +35,16 @@ class TodoListPageState extends State<TodoListPage> {
     super.initState();
   }
 
-  void vibrate() async {
-    // TODO: fix vibrations
-    // if (await Vibration.hasVibrator()) {
-    //   Vibration.vibrate();
-    // }
-    Vibration.vibrate();
+  void _vibrate() async {
+    if (await Vibration.hasVibrator() ?? false) {
+      Vibration.vibrate(duration: 150);
+    } else {
+      print('No Vibrator present 😭');
+    }
+  }
+
+  void _playSound() {
+    AudioPlayer().play(AssetSource('/audio/check.wav'));
   }
 
   @override
@@ -144,8 +148,8 @@ class TodoListPageState extends State<TodoListPage> {
             setState(() {
               store.getTasks()[index].completed = value!;
 
-              if (value) vibrate();
-            })
+                  _vibrate();
+                  _playSound();
           },
         ),
         title: Flexible(

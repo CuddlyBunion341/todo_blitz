@@ -43,6 +43,7 @@ dependencies:
   flutter_local_notifications: ^8.2.0
   path_provider: ^2.0.15
   flutter_launcher_icons: ^0.13.1
+  audioplayers: ^4.1.0
 
 dev_dependencies:
   flutter_test:
