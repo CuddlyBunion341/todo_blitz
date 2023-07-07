@@ -10,10 +10,23 @@ class TaskStore extends ChangeNotifier {
   TaskStore(String filename) {
     _fileService = FileService(filename);
 
-    // for (int i = 0; i < 10; i++) {
-    //   _tasks.add(Task('Task $i', '', DateTime.now()));
-    // }
-    loadData();
+    // TODO: remove
+
+    _tasks.addAll([
+      Task('Convince ChatGPT to not destroy humanity', '', DateTime.now()),
+      Task('Do my Taxes', '', DateTime.now(), completed: true),
+      Task('Project: Random Excuse Generator', '', DateTime.now(),
+          completed: true),
+      Task('Debug a coffee amchine', '', DateTime.now(), completed: true),
+      Task('Create my first Cross-Platform mobile Application with Flutter', '',
+          DateTime.now(),
+          completed: true),
+      Task('Fix the Windows Kernel', '', DateTime.now(), completed: true),
+      Task('Rank up in Valorant', '', DateTime.now(), completed: true),
+      Task('Finish Homework', '', DateTime.now(), completed: true),
+    ]);
+
+    // loadData();
   }
 
   Map<String, dynamic> toJson() {

@@ -3,9 +3,5 @@
          the Flutter tool needs it to communicate with the running application
          to allow setting breakpoints, to provide hot reload, etc.
     -->
-    <receiver
-        android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
-        android:exported="true">
-    </receiver>
     <uses-permission android:name="android.permission.INTERNET" />
 </manifest>
