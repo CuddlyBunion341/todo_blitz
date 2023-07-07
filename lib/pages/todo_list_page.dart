@@ -1,7 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-// import 'package:just_audio/just_audio.dart';
-// import 'package:just_audio/just_audio.dart';
 import 'package:provider/provider.dart';
 import 'package:shake/shake.dart';
 import 'package:todo_blitz/pages/todo_detail_page.dart';
@@ -9,7 +7,9 @@ import 'package:vibration/vibration.dart';
 
 import '../model/task.dart';
 import '../service/task_store.dart';
+import '../widgets/dialogue.dart';
 
+/// A class that represents the page that displays the list of tasks.
 class TodoListPage extends StatefulWidget {
   const TodoListPage({super.key});
 
@@ -19,37 +19,52 @@ class TodoListPage extends StatefulWidget {
   }
 }
 
+/// State for [TodoListPage].
 class TodoListPageState extends State<TodoListPage> {
   TodoListPageState() {
     ShakeDetector.autoStart(onPhoneShake: () {
-      // TODO: FIX ROUTE
+      // TODO: fix shaker
       if (ModalRoute.of(context)!.settings.name != '/') {
         return;
       }
 
-      setState(() {
-        showDialog(
-          context: context,
-          builder: (context) => DialogWidget(
-            'title',
-            'body',
-            'rm_tasks',
-            () {
-              // TODO: get store from provider
-              // Provider.of<TaskStore>(context, listen: false)
-              // .clearCompletedTasks();
-            },
-          ),
-        );
-      });
+      TaskStore store = Provider.of<TaskStore>(context, listen: false);
+
+      if (DialogWidget.dialogExists('rm_tasks')) return;
+      if (store.getCompletedTasks().isEmpty) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => DialogWidget(
+          'rm_tasks',
+          'Clear completed tasks',
+          'All completed Todo-Tasks will be deleted, this action is not undoable!',
+          () {
+            setState(() {
+              store.clearCompletedTasks();
+            });
+          },
+        ),
+      );
     });
   }
 
+  /// Initializes the state of this widget.
   @override
   void initState() {
     super.initState();
   }
 
+  /// Disposes of this widget.
+  @override
+  void dispose() {
+    super.dispose();
+    Vibration.cancel();
+    // TODO: dispose ShakeDetector
+    // TODO: displose AudioPlayer
+  }
+
+  /// Vibrates the device for 150 milliseconds.
   void _vibrate() async {
     if (await Vibration.hasVibrator() ?? false) {
       Vibration.vibrate(duration: 150);
@@ -58,55 +73,64 @@ class TodoListPageState extends State<TodoListPage> {
     }
   }
 
+  /// Plays a check sound.
   void _playSound() {
     AudioPlayer().play(AssetSource('/audio/check.wav'));
   }
 
+  /// Builds the app bar.
+  AppBar _appBar() {
+    return AppBar(
+      backgroundColor: Colors.black,
+      actions: <Widget>[
+        IconButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/config');
+          },
+          icon: const Icon(
+            Icons.settings,
+            color: Colors.white,
+          ),
+        ),
+      ],
+      title: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            'TodoBlitz',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Icon(
+            Icons.bolt,
+            color: Colors.white,
+          )
+        ],
+      ),
+    );
+  }
+
+  /// Builds the widget.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        actions: <Widget>[
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/config');
-            },
-            icon: const Icon(
-              Icons.settings,
-              color: Colors.white,
-            ),
-          ),
-        ],
-        title: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'TodoBlitz',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Icon(
-              Icons.bolt,
-              color: Colors.white,
-            )
-          ],
-        ),
-      ),
+      appBar: _appBar(),
       body: Column(
         children: [
-          taskForm(context),
+          _taskForm(context),
+          // _taskList(context),
           Expanded(
-            child: taskList(context),
+            child: _taskList(context),
           ),
         ],
       ),
     );
   }
 
-  Widget taskForm(BuildContext context) {
+  /// Builds the task form.
+  Widget _taskForm(BuildContext context) {
     TextEditingController controller = TextEditingController();
     TaskStore store = Provider.of<TaskStore>(context);
 
@@ -137,8 +161,15 @@ class TodoListPageState extends State<TodoListPage> {
     ]);
   }
 
-  Widget taskList(BuildContext context) {
+  /// Builds the task list.
+  Widget _taskList(BuildContext context) {
     TaskStore store = Provider.of<TaskStore>(context);
+
+    if (store.getTasks().isEmpty) {
+      return const Center(
+        child: Text('No Tasks'),
+      );
+    }
 
     return ReorderableListView(
       children: [
@@ -157,23 +188,25 @@ class TodoListPageState extends State<TodoListPage> {
     );
   }
 
+  /// Builds a list item. (task)
   Widget listItem(BuildContext context, index) {
     TaskStore store = Provider.of<TaskStore>(context);
 
+    Task task = store.getTasks()[index];
+
     return Card(
-      key: Key(store.getTasks()[index].uuid),
-      color: store.getTasks()[index].completed
+      key: Key(task.uuid),
+      color: task.completed
           ? const Color.fromARGB(255, 233, 233, 233)
           : const Color.fromARGB(255, 255, 255, 255),
       child: ListTile(
-        // tileColor:
+        // tileColor: Color.fromARGB(255, 255, 255, 255),
         leading: Checkbox(
-          value: store.getTasks()[index].completed,
+          value: task.completed,
           onChanged: (value) {
             setState(
               () {
-                store.getTasks()[index].completed = value!;
-
+                task.completed = value!;
                 if (value) {
                   _vibrate();
                   _playSound();
@@ -184,22 +217,18 @@ class TodoListPageState extends State<TodoListPage> {
         ),
         title: Flexible(
           child: Text(
-            store.getTasks()[index].title,
+            task.title,
             style: TextStyle(
-              decoration: store.getTasks()[index].completed
+              decoration: task.completed
                   ? TextDecoration.lineThrough
                   : TextDecoration.none,
             ),
           ),
         ),
-        trailing:
-            // child: Row(
-            // children: [
-            // store.getTasks()[index].date
-            IconButton(
+        trailing: IconButton(
           onPressed: () {
             setState(() {
-              store.removeTask(store.getTasks()[index]);
+              store.removeTask(task);
             });
           },
           alignment: Alignment.centerRight,
@@ -208,58 +237,12 @@ class TodoListPageState extends State<TodoListPage> {
         onTap: () async {
           await showModalBottomSheet(
             context: context,
-            builder: (BuildContext context) =>
-                TodoDetailPage(store.getTasks()[index]),
+            builder: (BuildContext context) => TodoDetailPage(task),
           );
-          setState(() {});
+          setState(() {
+            // update state to refresh the list
+          });
         },
-      ),
-    );
-  }
-}
-
-class DialogWidget extends StatelessWidget {
-  final String id;
-  final String title;
-  final String body;
-  final Function callback;
-
-  static List<DialogWidget> dialogs = [];
-
-  const DialogWidget(this.id, this.title, this.body, this.callback,
-      {super.key});
-
-  void _remove() {
-    dialogs.remove(this);
-  }
-
-  static bool dialogExists(String id) {
-    return dialogs.any((element) => element.id == id);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        children: [
-          Text(title),
-          Text(body),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              callback();
-              _remove();
-            },
-            child: const Text('OK'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _remove();
-            },
-            child: const Text('Close'),
-          ),
-        ],
       ),
     );
   }

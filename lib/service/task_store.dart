@@ -10,9 +10,9 @@ class TaskStore extends ChangeNotifier {
   TaskStore(String filename) {
     _fileService = FileService(filename);
 
-    for (int i = 0; i < 10; i++) {
-      _tasks.add(Task('Task $i', '', DateTime.now()));
-    }
+    // for (int i = 0; i < 10; i++) {
+    //   _tasks.add(Task('Task $i', '', DateTime.now()));
+    // }
     loadData();
   }
 
@@ -23,16 +23,14 @@ class TaskStore extends ChangeNotifier {
   }
 
   void loadData() async {
-    return;
     Map<String, dynamic> json = await _fileService.readJson();
-    List<dynamic> tasks = json['tasks'];
+    List<dynamic> tasks = json['tasks'] ?? [];
     for (var task in tasks) {
       _tasks.add(Task.fromJson(task));
     }
   }
 
   void saveData() async {
-    return;
     await _fileService.writeJson(toJson());
   }
 

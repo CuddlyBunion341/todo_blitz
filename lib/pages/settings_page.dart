@@ -1,39 +1,37 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_blitz/service/task_store.dart';
 
+/// A class that represents the page that displays the settings.
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
+  /// Builds the widget.
   @override
   Widget build(BuildContext context) {
+    TaskStore tasks = Provider.of<TaskStore>(context);
+
     return Scaffold(
-        appBar:
-            AppBar(backgroundColor: Colors.black, actions: const <Widget>[]),
-        body: Column(
-          children: <Widget>[
-            const Text('Stats:'),
-            const Text('Total tasks: \${0}'),
-            const Text('Total completed: \${0}'),
-            const Text('Total unchecked: \${0}'),
-            const Text('Notifications sent: \${0}'),
-            const Text('CSV Actions'),
-            TextButton(
-              onPressed: () {},
-              child: const Text('Export Tasks CSV'),
+      appBar: AppBar(backgroundColor: Colors.black, actions: const <Widget>[]),
+      body: Column(
+        children: <Widget>[
+          const Text('Reminders'),
+          ListTile(
+            leading: const Text('Allow notifications'),
+            trailing: Checkbox(
+              value: false,
+              onChanged: (value) {
+                // TODO: Implement this
+              },
             ),
-            TextButton(
-              onPressed: () {},
-              child: const Text('Import Tasks CSV'),
-            ),
-            const Text('JSON Actions'),
-            TextButton(
-              onPressed: () {},
-              child: const Text('Export Tasks JSON'),
-            ),
-            TextButton(
-              onPressed: () {},
-              child: const Text('Import Tasks JSON'),
-            ),
-          ],
-        ));
+          ),
+          const Text('Stats:'),
+          Text('Total tasks: ${tasks.getTasks().length}'), // TODO: Fix this
+          Text('Total completed: ${tasks.getCompletedTasks().length}'),
+          Text('Total unchecked: ${tasks.getIncompleteTasks().length}'),
+          const Text('Notifications sent: TODO'),
+        ],
+      ),
+    );
   }
 }
