@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:todo_blitz/pages/todo_list_page.dart';
 
 import '../model/task.dart';
 
 class TodoDetailPage extends StatefulWidget {
+  // TODO: Fix mutable state
   Task task = Task('', '', DateTime.now());
 
-  TodoDetailPage(this.task);
+  TodoDetailPage(this.task, {super.key});
 
   @override
   State<StatefulWidget> createState() {
+    // TODO: Fix warning
     return TodoDetailPageState(this.task);
   }
 }
@@ -40,12 +40,13 @@ class TodoDetailPageState extends State<TodoDetailPage> {
       lastDate: DateTime(2030),
     );
 
-    editedTask.date = picked!;
+    setState(() {
+      editedTask.date = picked ?? editedTask.date;
+    });
   }
 
   String _formatDate(DateTime date) {
-    DateTime now = DateTime.now();
-    return DateFormat.yMMMEd().format(now);
+    return DateFormat.yMMMEd().format(date);
   }
 
   @override
@@ -79,9 +80,7 @@ class TodoDetailPageState extends State<TodoDetailPage> {
               ),
               TextButton(
                   onPressed: () {
-                    setState(() {
-                      _selectDate(context);
-                    });
+                    _selectDate(context);
                   },
                   child: const Text('Select Date')),
               Text('Date: ${_formatDate(editedTask.date)}'),
@@ -96,9 +95,15 @@ class TodoDetailPageState extends State<TodoDetailPage> {
               TextButton(
                 onPressed: () {
                   // update task
-                  originalTask.copy(editedTask);
-                  Navigator.pop(
-                      context, originalTask); // return to previous page
+                  setState(() {
+                    // copy values from controllers to editedTask
+                    editedTask.title = titleController.text;
+                    editedTask.content = contentController.text;
+                    originalTask
+                        .copy(editedTask); // copy changes to original, on save
+                    Navigator.pop(
+                        context, originalTask); // return to previous page
+                  });
                 },
                 child: const Text('Save'),
               ),
