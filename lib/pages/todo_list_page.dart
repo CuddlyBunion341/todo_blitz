@@ -1,7 +1,8 @@
-import 'dart:math';
-
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+// import 'package:just_audio/just_audio.dart';
+// import 'package:just_audio/just_audio.dart';
+import 'package:provider/provider.dart';
 import 'package:shake/shake.dart';
 import 'package:todo_blitz/pages/todo_detail_page.dart';
 import 'package:vibration/vibration.dart';
@@ -19,13 +20,27 @@ class TodoListPage extends StatefulWidget {
 }
 
 class TodoListPageState extends State<TodoListPage> {
-  TaskStore store = TaskStore();
-
   TodoListPageState() {
     ShakeDetector.autoStart(onPhoneShake: () {
+      // TODO: FIX ROUTE
+      if (ModalRoute.of(context)!.settings.name != '/') {
+        return;
+      }
+
       setState(() {
-        // TODO: implement shake action
-        store.addTask(Task('Dummy Task', 'Body', DateTime.now(), false));
+        showDialog(
+          context: context,
+          builder: (context) => DialogWidget(
+            'title',
+            'body',
+            'rm_tasks',
+            () {
+              // TODO: get store from provider
+              // Provider.of<TaskStore>(context, listen: false)
+              // .clearCompletedTasks();
+            },
+          ),
+        );
       });
     });
   }
@@ -82,32 +97,38 @@ class TodoListPageState extends State<TodoListPage> {
       ),
       body: Column(
         children: [
-          taskForm(),
+          taskForm(context),
           Expanded(
-            child: taskList(store),
+            child: taskList(context),
           ),
         ],
       ),
     );
   }
 
-  Widget taskForm() {
+  Widget taskForm(BuildContext context) {
     TextEditingController controller = TextEditingController();
+    TaskStore store = Provider.of<TaskStore>(context);
 
     return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
       SizedBox(
-        width: 200,
+        width: 300,
         child: TextField(
           controller: controller,
-          // decoration: const InputDecoration(
-          //   hintText: 'Task Name',
-          // ),
+          decoration: const InputDecoration(
+            hintText: 'Task Name',
+          ),
         ),
       ),
       TextButton(
         onPressed: () {
+          if (controller.text.trim().isEmpty) {
+            // do nothing
+            return;
+          }
+
           setState(() {
-            store.addTask(Task(controller.text, '', DateTime.now(), false));
+            store.addTask(Task(controller.text, '', DateTime.now()));
             controller.clear();
           });
         },
@@ -116,7 +137,9 @@ class TodoListPageState extends State<TodoListPage> {
     ]);
   }
 
-  Widget taskList(TaskStore store) {
+  Widget taskList(BuildContext context) {
+    TaskStore store = Provider.of<TaskStore>(context);
+
     return ReorderableListView(
       children: [
         for (int index = 0; index < store.getTasks().length; index++)
@@ -135,21 +158,28 @@ class TodoListPageState extends State<TodoListPage> {
   }
 
   Widget listItem(BuildContext context, index) {
+    TaskStore store = Provider.of<TaskStore>(context);
+
     return Card(
-      // tileColor: Colors.black12,
+      key: Key(store.getTasks()[index].uuid),
       color: store.getTasks()[index].completed
           ? const Color.fromARGB(255, 233, 233, 233)
-          : Colors.white,
+          : const Color.fromARGB(255, 255, 255, 255),
       child: ListTile(
         // tileColor:
         leading: Checkbox(
           value: store.getTasks()[index].completed,
-          onChanged: (value) => {
-            setState(() {
-              store.getTasks()[index].completed = value!;
+          onChanged: (value) {
+            setState(
+              () {
+                store.getTasks()[index].completed = value!;
 
+                if (value) {
                   _vibrate();
                   _playSound();
+                }
+              },
+            );
           },
         ),
         title: Flexible(
@@ -162,7 +192,11 @@ class TodoListPageState extends State<TodoListPage> {
             ),
           ),
         ),
-        trailing: IconButton(
+        trailing:
+            // child: Row(
+            // children: [
+            // store.getTasks()[index].date
+            IconButton(
           onPressed: () {
             setState(() {
               store.removeTask(store.getTasks()[index]);
@@ -171,14 +205,61 @@ class TodoListPageState extends State<TodoListPage> {
           alignment: Alignment.centerRight,
           icon: const Icon(Icons.delete),
         ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => TodoDetailPage(store.getTasks()[index]),
-            ),
+        onTap: () async {
+          await showModalBottomSheet(
+            context: context,
+            builder: (BuildContext context) =>
+                TodoDetailPage(store.getTasks()[index]),
           );
+          setState(() {});
         },
+      ),
+    );
+  }
+}
+
+class DialogWidget extends StatelessWidget {
+  final String id;
+  final String title;
+  final String body;
+  final Function callback;
+
+  static List<DialogWidget> dialogs = [];
+
+  const DialogWidget(this.id, this.title, this.body, this.callback,
+      {super.key});
+
+  void _remove() {
+    dialogs.remove(this);
+  }
+
+  static bool dialogExists(String id) {
+    return dialogs.any((element) => element.id == id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          Text(title),
+          Text(body),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              callback();
+              _remove();
+            },
+            child: const Text('OK'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _remove();
+            },
+            child: const Text('Close'),
+          ),
+        ],
       ),
     );
   }

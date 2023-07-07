@@ -1,7 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:todo_blitz/model/task.dart';
+import 'package:todo_blitz/service/task_file_service.dart';
 
 /// A class that represents a list of tasks.
-class TaskStore {
+class TaskStore extends ChangeNotifier {
   final List<Task> _tasks = [];
 
   void init() {

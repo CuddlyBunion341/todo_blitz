@@ -6,38 +6,41 @@ import 'package:todo_blitz/pages/todo_list_page.dart';
 import '../model/task.dart';
 
 class TodoDetailPage extends StatefulWidget {
-  Task task = Task('', '', DateTime.now(), false);
+  Task task = Task('', '', DateTime.now());
 
-  TodoDetailPage(Task task, {super.key}) {
-    this.task = task.clone();
-  }
+  TodoDetailPage(this.task);
 
   @override
   State<StatefulWidget> createState() {
-    return TodoDetailPageState(task);
+    return TodoDetailPageState(this.task);
   }
 }
 
 class TodoDetailPageState extends State<TodoDetailPage> {
-  Task task;
+  Task originalTask;
+  Task editedTask = Task('', '', DateTime.now());
+  TextEditingController titleController;
+  TextEditingController contentController;
 
-  TodoDetailPageState(this.task);
+  TodoDetailPageState(this.originalTask)
+      : titleController = TextEditingController(text: originalTask.title),
+        contentController = TextEditingController(text: originalTask.content);
 
   @override
   void initState() {
     super.initState();
-    task = task.clone();
+    editedTask = originalTask.clone();
   }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: task.date,
+      initialDate: editedTask.date,
       firstDate: DateTime(2010),
       lastDate: DateTime(2030),
     );
 
-    task.date = picked!;
+    editedTask.date = picked!;
   }
 
   String _formatDate(DateTime date) {
@@ -47,46 +50,60 @@ class TodoDetailPageState extends State<TodoDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController titleController =
-        TextEditingController(text: task.title);
-    TextEditingController contentController =
-        TextEditingController(text: task.content);
-
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: const Text('Task Details'),
       ),
       body: Center(
-        child: Column(
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(
-                hintText: 'Task Name',
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            // crossAxisAlignment: CrossAxisAlignment.center,
+            // mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  hintText: 'Task Name',
+                ),
               ),
-            ),
-            TextField(
-              controller: contentController,
-              maxLines: null,
-              keyboardType: TextInputType.multiline,
-            ),
-            TextButton(
-                onPressed: () {
+              TextField(
+                controller: contentController,
+                maxLines: null,
+                keyboardType: TextInputType.multiline,
+                minLines: 4,
+                decoration: const InputDecoration(
+                  hintText: 'Task Description',
+                ),
+              ),
+              TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectDate(context);
+                    });
+                  },
+                  child: const Text('Select Date')),
+              Text('Date: ${_formatDate(editedTask.date)}'),
+              Switch(
+                value: editedTask.notify,
+                onChanged: (bool value) {
                   setState(() {
-                    _selectDate(context);
+                    editedTask.notify = value;
                   });
                 },
-                child: const Text('Select Date')),
-            Text('Date: ${_formatDate(task.date)}'),
-            TextButton(
+              ),
+              TextButton(
                 onPressed: () {
                   // update task
-                  task.title = titleController.text;
-                  task.content = contentController.text;
-                  Navigator.pop(context, task); // return to previous page
+                  originalTask.copy(editedTask);
+                  Navigator.pop(
+                      context, originalTask); // return to previous page
                 },
-                child: const Text('Save')),
-          ],
+                child: const Text('Save'),
+              ),
+            ],
+          ),
         ),
       ),
     );
